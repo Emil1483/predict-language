@@ -13,7 +13,6 @@ class Network(object):
         self.sizes = sizes
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
-        self.multipliers = np.reshape(get_multipliers(), (3, 1))
 
     def feedforward(self, a: np.ndarray) -> np.ndarray:
         for b, w in zip(self.biases, self.weights):
@@ -84,10 +83,7 @@ class Network(object):
         return nabla_biases, nabla_weights
 
     def evaluate(self, test_data):
-        test_results = [
-            (np.argmax(self.feedforward(x) * self.multipliers), y)
-            for (x, y) in test_data
-        ]
+        test_results = [(np.argmax(self.feedforward(x)), y) for (x, y) in test_data]
         return sum(int(x == y) for (x, y) in test_results)
 
     def cost_derivative(self, output_activations, y):
@@ -109,13 +105,9 @@ def load_net() -> Network:
 
 def predict_language(net: Network, word: str) -> str:
     x = vectorized_word(word.lower())
-    result = net.feedforward(x) * net.multipliers
+    result = net.feedforward(x)
     index = np.argmax(result)
     confidence = result[index][0] / float(sum(result))
-    language = {0: "norwegian", 1: "english", 2: "both english and norwegian"}[index]
+    language = {0: "norwegian", 1: "english"}[index]
 
-    print("\nraw output:")
-    print(net.feedforward(x))
-    print("\ntransformed output:")
-    print(result)
     print(f'\n"{word}" is {confidence * 100:.2f}% {language}\n')
